@@ -1,0 +1,1517 @@
+{
+  "name": "PrimaSolusi - Email Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# PrimaSolusi Email Automation\n\n## Flow Overview\n1. Gmail Trigger → tangkap email masuk\n2. Log ke Google Sheets (status: received)\n3. Markdown → convert HTML ke plain text\n4. Summarize email dengan AI\n5. Classify email: kandidat / klien_korporat / spam\n6. Switch Router → pisah branch\n7. Branch A (kandidat): auto-reply + update log\n8. Branch B (klien_korporat): buat draft + notif Slack + update log\n9. Branch C (spam): label Gmail + update log\n\n## Setup yang perlu diisi\n- Gmail credential\n- OpenAI API key\n- Google Sheets ID + Sheet Name\n- Slack credential + Channel ID",
+        "height": 340,
+        "width": 700,
+        "color": 5
+      },
+      "id": "47766fee-1e52-460c-a926-06ce6e58a47c",
+      "name": "Sticky Note - Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1328,
+        176
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "id": "8af3d923-2c1d-41c1-934e-fa691a7886e1",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "position": [
+        -1280,
+        672
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kamehlQbRe1kzC35",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o",
+          "mode": "list",
+          "cachedResultName": "PrimaSolusi - Email Automation (Claude)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Inbox Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email Pengirim": "={{ $json.from.text }}",
+            "Subjek": "={{ $json.subject }}",
+            "Tanggal Masuk": "={{ $now.toFormat('DD || HH:mm') }} ",
+            "Status": "DITERIMA",
+            "Message ID": "={{ $json.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Tanggal Masuk",
+              "displayName": "Tanggal Masuk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email Pengirim",
+              "displayName": "Email Pengirim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subjek",
+              "displayName": "Subjek",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Kategori",
+              "displayName": "Kategori",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Message ID",
+              "displayName": "Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b111137f-ae9e-4903-8940-0092fd87f815",
+      "name": "Sheets - Insert Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -896,
+        672
+      ],
+      "typeVersion": 4,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleApi": {
+          "id": "hPEPY5ukXyd0TbJR",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "html": "={{ $('Gmail Trigger').item.json.html }}",
+        "options": {}
+      },
+      "id": "72a5bc57-a527-4ef5-b4c3-b64025a5ef2f",
+      "name": "Markdown",
+      "type": "n8n-nodes-base.markdown",
+      "position": [
+        -656,
+        672
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {
+          "summarizationMethodAndPrompts": {
+            "values": {
+              "combineMapPrompt": "=Write a concise summary of the following email in max 80 words in English:\n\n\"{{ $json.data }}\"\n",
+              "prompt": "=Write a concise summary of the following email in max 80 words in English. Focus on: who sent it, what they want, and any key details.\n\n\"{{ $json.data }}\"\n\nDo not include word count."
+            }
+          }
+        }
+      },
+      "id": "24095b1c-29bf-408f-aab8-fef3813c1ebc",
+      "name": "Email Summarization Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "position": [
+        -976,
+        1248
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "content": "## Branch A: KANDIDAT\nAuto-reply langsung ke pengirim.\nPesan: CV diterima, akan diproses 3-5 hari kerja.\nLog kandidat ke sheet terpisah.",
+        "height": 352,
+        "width": 720,
+        "color": 3
+      },
+      "id": "177369a8-789b-48f7-8311-98019e57a742",
+      "name": "Sticky Note - Kandidat",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        256
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.from.text }}",
+        "subject": "=Re : {{ $('Gmail Trigger').item.json.subject }}",
+        "message": "=<p>Yth. {{ $('Gmail Trigger').item.json.from.value[0].name }},</p>\n\n<p>Terima kasih telah menghubungi <strong>PrimaSolusi Consulting</strong>.</p>\n\n<p>Kami telah menerima CV dan lamaran Anda. Tim rekrutmen kami akan meninjau profil Anda dan menghubungi kembali dalam <strong>3–5 hari kerja</strong>.</p>\n\n<p>Jika ada pertanyaan lebih lanjut, jangan ragu untuk membalas email ini.</p>\n\n<p>Salam hangat,<br>\n<strong>Tim PrimaSolusi Consulting</strong></p>",
+        "options": {}
+      },
+      "id": "2d969840-a624-404b-9ab2-ce0d1c14ad9b",
+      "name": "Gmail - Auto Reply Kandidat",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        352,
+        400
+      ],
+      "typeVersion": 2,
+      "webhookId": "82bf7aa3-3ed1-42e4-95e3-ded80c990018",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kamehlQbRe1kzC35",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o",
+          "mode": "list",
+          "cachedResultName": "PrimaSolusi - Email Automation (Claude)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1142405924,
+          "mode": "list",
+          "cachedResultName": "Kandidat",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o/edit#gid=1142405924"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Tanggal Masuk": "={{ $('Sheets - Insert Log').item.json['Tanggal Masuk'] }}",
+            "Email Kandidat": "={{ $('Sheets - Insert Log').item.json['Email Pengirim'] }}",
+            "Subjek (Posisi)": "={{ $('Sheets - Insert Log').item.json.Subjek }}",
+            "Status Auto-Reply": "SENT"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Tanggal Masuk",
+              "displayName": "Tanggal Masuk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email Kandidat",
+              "displayName": "Email Kandidat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subjek (Posisi)",
+              "displayName": "Subjek (Posisi)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status Auto-Reply",
+              "displayName": "Status Auto-Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "7ad5b9c7-8f63-42ac-9bcf-42132dc14bfd",
+      "name": "Sheets - Log Kandidat",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        592,
+        400
+      ],
+      "typeVersion": 4,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleApi": {
+          "id": "hPEPY5ukXyd0TbJR",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o",
+          "mode": "list",
+          "cachedResultName": "PrimaSolusi - Email Automation (Claude)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Inbox Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Kategori": "={{ $('Basic LLM Chain').item.json.output.kategori }}",
+            "Summary": "={{ $('Basic LLM Chain').item.json.output.summary }}",
+            "Status": "SENT",
+            "Message ID": "={{ $('Gmail Trigger').item.json.id }}"
+          },
+          "matchingColumns": [
+            "Message ID"
+          ],
+          "schema": [
+            {
+              "id": "Tanggal Masuk",
+              "displayName": "Tanggal Masuk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Email Pengirim",
+              "displayName": "Email Pengirim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Subjek",
+              "displayName": "Subjek",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Kategori",
+              "displayName": "Kategori",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Message ID",
+              "displayName": "Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "73ef3e7a-17fb-4001-a534-6faa648c4cca",
+      "name": "Sheets - Update Log Kandidat",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        832,
+        400
+      ],
+      "typeVersion": 4,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleApi": {
+          "id": "hPEPY5ukXyd0TbJR",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Branch B: KLIEN KORPORAT\n1. Buat draft reply di Gmail (bukan auto-send)\n2. Kirim notif ke Slack #sales-leads\n3. Update Inbox Log",
+        "height": 480,
+        "width": 1296,
+        "color": 4
+      },
+      "id": "a3142073-fedf-4f3a-83e5-881e8e341c62",
+      "name": "Sticky Note - Korporat",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        656
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Draft a professional email reply to the following message:\n\nFrom: {{ $('Gmail Trigger').item.json.from.text }}\nSubject: {{ $('Gmail Trigger').item.json.subject }}\n\nEmail Summary: {{ $('Basic LLM Chain').item.json.output.summary }}\n\nInstructions:\n- You are replying on behalf of PrimaSolusi Consulting, an HR and recruitment consultancy.\n- Be professional and warm.\n- Acknowledge their inquiry and express interest in helping.\n- Suggest scheduling a brief call or meeting to discuss their needs further.\n- Do not make up specific pricing or promises — keep it general.\n- Maximum 120 words.\n- Write in Bahasa Indonesia.",
+        "options": {
+          "systemMessage": "You are an expert business email writer for an HR consulting firm. Write professional, concise, and persuasive email drafts."
+        }
+      },
+      "id": "ffecb4bb-c63b-433a-8077-3c804537f700",
+      "name": "Write Draft - Korporat",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        352,
+        816
+      ],
+      "typeVersion": 1.7,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Re :  {{ $('Gmail Trigger').item.json.subject }}",
+        "message": "={{ $json.output }}",
+        "options": {
+          "sendTo": "={{ $('Gmail Trigger').item.json.from.value[0].address }}"
+        }
+      },
+      "id": "379602a9-4f52-4e48-a7d7-2d69c1bae541",
+      "name": "Gmail - Create Draft",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        640,
+        816
+      ],
+      "typeVersion": 2,
+      "webhookId": "f827e186-92cb-4139-9620-b8631512f9fa",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kamehlQbRe1kzC35",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AS5KU31M0",
+          "mode": "list",
+          "cachedResultName": "sales-leads-emclas-claude"
+        },
+        "text": "=:email: *Lead Baru - Klien Korporat*\n\n*Dari:* {{ $('Gmail Trigger').item.json.from.value[0].name }} ({{ $('Gmail Trigger').item.json.from.value[0].address }})\n*Subject:* {{ $('Gmail Trigger').item.json.subject }}\n*Waktu:* {{ $now.toFormat('dd/MM/yyyy HH:mm') }}\n\n*Ringkasan:*\n{{ $('Basic LLM Chain').item.json.output.summary }}\n\n:pencil: Draft balasan sudah dibuat di Gmail — silakan review sebelum dikirim.",
+        "otherOptions": {}
+      },
+      "id": "290ebe9c-3efa-493e-915f-5c27a157828a",
+      "name": "Slack - Notif Sales Lead",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        848,
+        816
+      ],
+      "typeVersion": 2.2,
+      "webhookId": "d0811ef6-c58a-4088-9890-68157ec195de",
+      "retryOnFail": false,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "slackApi": {
+          "id": "uPA0IKXIy1NzJtqu",
+          "name": "learn-n8n"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o",
+          "mode": "list",
+          "cachedResultName": "PrimaSolusi - Email Automation (Claude)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Inbox Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "DRAFTED",
+            "Kategori": "={{ $('Basic LLM Chain').item.json.output.kategori }}",
+            "Summary": "={{ $('Basic LLM Chain').item.json.output.summary }}",
+            "Message ID": "={{ $('Gmail Trigger').item.json.id }}"
+          },
+          "matchingColumns": [
+            "Message ID"
+          ],
+          "schema": [
+            {
+              "id": "Tanggal Masuk",
+              "displayName": "Tanggal Masuk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Email Pengirim",
+              "displayName": "Email Pengirim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Subjek",
+              "displayName": "Subjek",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Kategori",
+              "displayName": "Kategori",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Message ID",
+              "displayName": "Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "dff2f77f-91f0-4e1d-aff6-43ce8eaebf44",
+      "name": "Sheets - Update Log Korporat",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1296,
+        816
+      ],
+      "typeVersion": 4,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleApi": {
+          "id": "hPEPY5ukXyd0TbJR",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Branch C: SPAM\nTambahkan label 'SPAM-AUTO' di Gmail.\nUpdate Inbox Log — tidak ada balasan.",
+        "height": 316,
+        "width": 496,
+        "color": 2
+      },
+      "id": "3d7fa2eb-7074-43f8-b900-5cb9af7c1ff9",
+      "name": "Sticky Note - Spam",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        1168
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "SPAM"
+        ]
+      },
+      "id": "b6419110-77fe-4f31-811e-2d54efc139d0",
+      "name": "Gmail - Label Spam",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        352,
+        1280
+      ],
+      "typeVersion": 2,
+      "webhookId": "2a48e193-acd6-4de5-8f30-d0ea0bc1bff2",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kamehlQbRe1kzC35",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o",
+          "mode": "list",
+          "cachedResultName": "PrimaSolusi - Email Automation (Claude)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Inbox Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Kategori": "SPAM",
+            "Status": "LABELED AS SPAM",
+            "Message ID": "={{ $('Gmail Trigger').item.json.id }}"
+          },
+          "matchingColumns": [
+            "Message ID"
+          ],
+          "schema": [
+            {
+              "id": "Tanggal Masuk",
+              "displayName": "Tanggal Masuk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Email Pengirim",
+              "displayName": "Email Pengirim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Subjek",
+              "displayName": "Subjek",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Kategori",
+              "displayName": "Kategori",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Message ID",
+              "displayName": "Message ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d207b680-d73f-4356-a433-17b83e466657",
+      "name": "Sheets - Update Log Spam",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        592,
+        1280
+      ],
+      "typeVersion": 4,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleApi": {
+          "id": "hPEPY5ukXyd0TbJR",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## ERROR HANDLING WORKFLOW (Terpisah)\nBuat workflow baru dengan node 'Error Trigger'.\nWorkflow ini otomatis jalan kalau main workflow crash.\nKirim notif Slack dengan detail error:\n- Nama workflow\n- Node yang gagal\n- Pesan error\n- Timestamp\n\nCara setup:\n1. Buat workflow baru\n2. Tambah node 'Error Trigger'\n3. Tambah Slack node\n4. Di main workflow → Settings → Error Workflow → pilih workflow error ini",
+        "height": 552,
+        "width": 1764
+      },
+      "id": "aa0f3320-72a9-4259-8179-2dcf0c537d65",
+      "name": "Sticky Note - Error Handling",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1520,
+        544
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.kategori }}",
+                    "rightValue": "KANDIDAT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "6086328e-1494-4303-9958-70828b2b7264"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "kandidat"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.kategori }}",
+                    "rightValue": "KLIEN",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "4a71c423-839b-4226-9a28-2aa906da6229"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "klien_korporat"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.kategori }}",
+                    "rightValue": "SPAM",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "2238b500-29b9-4746-a4d4-a8e05a772d15"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "spam"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8f99b3ce-280f-42b0-a225-0a1e6ece4054",
+      "name": "Switch - Email Router",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        -112,
+        656
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "inputText": "=Classify the following email:\n\nSubject: {{ $('Gmail Trigger').item.json.subject }}\n\nContent: {{ $json.response.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "kandidat",
+              "description": "Email dari seseorang yang mengirimkan CV, melamar pekerjaan, atau bertanya tentang lowongan kerja. Biasanya menyebut pengalaman kerja, skill, atau melampirkan CV/resume."
+            },
+            {
+              "category": "klien_korporat",
+              "description": "Email dari perusahaan atau individu yang menanyakan harga layanan rekrutmen, meminta proposal, ingin berdiskusi tentang kebutuhan HR, atau mengekspresikan minat untuk menggunakan jasa konsultan."
+            },
+            {
+              "category": "spam",
+              "description": "Email promosi, newsletter, penawaran tidak relevan, phishing, atau email yang tidak berhubungan dengan bisnis rekrutmen dan HR consulting."
+            }
+          ]
+        },
+        "options": {
+          "multiClass": false,
+          "fallback": "other",
+          "systemPromptTemplate": "Please classify the text provided by the user into one of the following categories: {categories}, and use the provided formatting instructions below. Don't explain, and only output the json.\n",
+          "enableAutoFixing": true
+        }
+      },
+      "id": "bca61507-4433-4928-8fba-e37f5042fbac",
+      "name": "Email Classifier",
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "position": [
+        -672,
+        1232
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        1456
+      ],
+      "id": "ff06bc69-8311-4acf-a577-45d1dbd28624",
+      "name": "Classifier",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HTzvHLQEVeUgc2Cy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -928,
+        1440
+      ],
+      "id": "e0ccc23a-f575-49d6-a0a2-304e635ee8dd",
+      "name": "Summarizer",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HTzvHLQEVeUgc2Cy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        352,
+        976
+      ],
+      "id": "986fbfdb-5202-41d5-8309-e558d4163205",
+      "name": "Draft Writer",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HTzvHLQEVeUgc2Cy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Kamu adalah admin cerdas. Tugasmu adalah menganalisis email dan memberikan output HANYA dalam format JSON mentah tanpa markdown atau teks tambahan.\n\nKategorikan email menjadi:\n- KANDIDAT: Jika melamar kerja atau kirim CV.\n- KLIEN: Jika tanya harga, proposal, atau bisnis.\n- SPAM: Jika iklan, promo, atau tidak jelas.\n\nBuat ringkasan (summary) maksimal 2 kalimat dalam Bahasa Indonesia.\n\nStruktur output:\n{\n  \"kategori\": \"KANDIDAT/KLIEN/SPAM\",\n  \"summary\": \"Isi ringkasan di sini...\"\n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.8,
+      "position": [
+        -448,
+        672
+      ],
+      "id": "80b82850-079e-434f-8e41-e0f332c384a4",
+      "name": "Basic LLM Chain",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        928
+      ],
+      "id": "7b350a90-7602-41af-8acb-81753b3216ad",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HTzvHLQEVeUgc2Cy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"kategori\": \"KANDIDAT/KLIEN/SPAM\",\n  \"summary\": \"Isi ringkasan di sini...\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -240,
+        928
+      ],
+      "id": "154caa2d-dba8-4b2e-b4f4-d927af7462bd",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o",
+          "mode": "list",
+          "cachedResultName": "PrimaSolusi - Email Automation (Claude)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 778392565,
+          "mode": "list",
+          "cachedResultName": "Klien",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DCPB3YNo6a8oyWMHAr9ZVZwkwzsLAATX0130T_zXh3o/edit#gid=778392565"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email Klien": "={{ $('Gmail Trigger').item.json.from.text }}",
+            "Tanggal Masuk": "={{ $('Sheets - Insert Log').item.json['Tanggal Masuk'] }}",
+            "Nama Klien": "={{ $('Sheets - Insert Log').item.json['Email Pengirim'] }}",
+            "Status Auto-Reply": "DRAFTED"
+          },
+          "matchingColumns": [
+            "Email Klien"
+          ],
+          "schema": [
+            {
+              "id": "Tanggal Masuk",
+              "displayName": "Tanggal Masuk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Klien",
+              "displayName": "Email Klien",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nama Klien",
+              "displayName": "Nama Klien",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status Auto-Reply",
+              "displayName": "Status Auto-Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "3ead85d0-d2c8-4e36-b158-0e774575c2ca",
+      "name": "Sheets - Log Korporat",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1072,
+        816
+      ],
+      "typeVersion": 4,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleApi": {
+          "id": "hPEPY5ukXyd0TbJR",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ccbdd201-74c6-476e-9d8e-bba9686bc4f2",
+              "leftValue": "={{ $json.from.text }}",
+              "rightValue": "MY_OAUTH_EMAIL",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1104,
+        688
+      ],
+      "id": "6b91d33f-1a83-4adb-bee4-4a17638bfe88",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        848
+      ],
+      "id": "5e9b2b4a-d0c5-438f-ac77-ca6d1d915f9a",
+      "name": "No Operation, do nothing"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets - Insert Log": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Summarization Chain": {
+      "main": [
+        [
+          {
+            "node": "Email Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Auto Reply Kandidat": {
+      "main": [
+        [
+          {
+            "node": "Sheets - Log Kandidat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets - Log Kandidat": {
+      "main": [
+        [
+          {
+            "node": "Sheets - Update Log Kandidat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Draft - Korporat": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Create Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Create Draft": {
+      "main": [
+        [
+          {
+            "node": "Slack - Notif Sales Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack - Notif Sales Lead": {
+      "main": [
+        [
+          {
+            "node": "Sheets - Log Korporat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Label Spam": {
+      "main": [
+        [
+          {
+            "node": "Sheets - Update Log Spam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch - Email Router": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Auto Reply Kandidat",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write Draft - Korporat",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail - Label Spam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Classifier": {
+      "main": [
+        [],
+        [],
+        []
+      ]
+    },
+    "Classifier": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarizer": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Summarization Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft Writer": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write Draft - Korporat",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Switch - Email Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets - Log Korporat": {
+      "main": [
+        [
+          {
+            "node": "Sheets - Update Log Korporat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Sheets - Insert Log",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Jakarta",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "LiWS7yRbLOiGiCUp"
+  },
+  "versionId": "81511843-6c5d-4f13-ac4d-300d5e92d3d2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9e878594a760165e7cd58d32fc1f8cedb951e19dfc74db16e2b8a5d262506736"
+  },
+  "id": "T9oBWsvGSrl8HAV1",
+  "tags": []
+}
