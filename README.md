@@ -8,6 +8,8 @@ An n8n workflow that reads incoming Gmail messages, uses an LLM to classify them
 
 Shared inboxes mix very different kinds of messages. Someone has to read each one, decide what it is, reply or forward it, and keep track of what was handled. This workflow does the sorting, the first response, and the tracking automatically, and leaves the high-value replies for a human to review.
 
+<img width="830" height="308" alt="Screenshot 2026-10-21 030414" src="https://github.com/user-attachments/assets/5f725146-315e-4fb9-960b-16f1f3c1e9b1" />
+
 ## What It Does
 
 | Category | Action |
